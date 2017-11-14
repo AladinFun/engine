@@ -194,11 +194,11 @@ var _mouseDownHandler = function (event) {
     var node = this.owner;
 
     if (node._hitTest(pos, this)) {
-        event.stopPropagation();
         if (CC_JSB) {
             event = Event.EventMouse.pool.get(event);
         }
         event.type = EventType.MOUSE_DOWN;
+        event.bubbles = true;
         node.dispatchEvent(event);
     }
 };
@@ -206,7 +206,6 @@ var _mouseMoveHandler = function (event) {
     var pos = event.getLocation();
     var node = this.owner;
     if (node._hitTest(pos, this)) {
-        event.stopPropagation();
         if (CC_JSB) {
             event = Event.EventMouse.pool.get(event);
         }
@@ -223,6 +222,7 @@ var _mouseMoveHandler = function (event) {
             this._previousIn = true;
         }
         event.type = EventType.MOUSE_MOVE;
+        event.bubbles = true;
         node.dispatchEvent(event);
     }
     else if (this._previousIn) {
@@ -240,11 +240,11 @@ var _mouseUpHandler = function (event) {
     var node = this.owner;
 
     if (node._hitTest(pos, this)) {
-        event.stopPropagation();
         if (CC_JSB) {
             event = Event.EventMouse.pool.get(event);
         }
         event.type = EventType.MOUSE_UP;
+        event.bubbles = true;
         node.dispatchEvent(event);
     }
 };
@@ -254,11 +254,11 @@ var _mouseWheelHandler = function (event) {
 
     if (node._hitTest(pos, this)) {
         //FIXME: separate wheel event and other mouse event.
-        // event.stopPropagation();
         if (CC_JSB) {
             event = Event.EventMouse.pool.get(event);
         }
         event.type = EventType.MOUSE_WHEEL;
+        event.bubbles = true;
         node.dispatchEvent(event);
     }
 };
@@ -396,11 +396,8 @@ var Node = cc.Class({
                         this._sgNode.setPositionX(value);
 
                         // fast check event
-                        var capListeners = this._capturingListeners &&
-                            this._capturingListeners._callbackTable[POSITION_CHANGED];
-                        var bubListeners = this._bubblingListeners &&
-                            this._bubblingListeners._callbackTable[POSITION_CHANGED];
-                        if ((capListeners && capListeners.length > 0) || (bubListeners && bubListeners.length > 0)) {
+                        var cache = this._hasListenerCache;
+                        if (cache && cache[POSITION_CHANGED]) {
                             // send event
                             if (CC_EDITOR) {
                                 this.emit(POSITION_CHANGED, new cc.Vec2(oldValue, localPosition.y));
@@ -442,11 +439,8 @@ var Node = cc.Class({
                         this._sgNode.setPositionY(value);
 
                         // fast check event
-                        var capListeners = this._capturingListeners &&
-                            this._capturingListeners._callbackTable[POSITION_CHANGED];
-                        var bubListeners = this._bubblingListeners &&
-                            this._bubblingListeners._callbackTable[POSITION_CHANGED];
-                        if ((capListeners && capListeners.length > 0) || (bubListeners && bubListeners.length > 0)) {
+                        var cache = this._hasListenerCache;
+                        if (cache && cache[POSITION_CHANGED]) {
                             // send event
                             if (CC_EDITOR) {
                                 this.emit(POSITION_CHANGED, new cc.Vec2(localPosition.x, oldValue));
@@ -483,7 +477,10 @@ var Node = cc.Class({
                     this._rotationX = this._rotationY = value;
                     this._sgNode.rotation = value;
 
-                    this.emit(ROTATION_CHANGED);
+                    var cache = this._hasListenerCache;
+                    if (cache && cache[ROTATION_CHANGED]) {
+                        this.emit(ROTATION_CHANGED);
+                    }
                 }
             }
         },
@@ -506,7 +503,10 @@ var Node = cc.Class({
                     this._rotationX = value;
                     this._sgNode.rotationX = value;
 
-                    this.emit(ROTATION_CHANGED);
+                    var cache = this._hasListenerCache;
+                    if (cache && cache[ROTATION_CHANGED]) {
+                        this.emit(ROTATION_CHANGED);
+                    }
                 }
             },
         },
@@ -529,7 +529,10 @@ var Node = cc.Class({
                     this._rotationY = value;
                     this._sgNode.rotationY = value;
 
-                    this.emit(ROTATION_CHANGED);
+                    var cache = this._hasListenerCache;
+                    if (cache && cache[ROTATION_CHANGED]) {
+                        this.emit(ROTATION_CHANGED);
+                    }
                 }
             },
         },
@@ -552,7 +555,10 @@ var Node = cc.Class({
                     this._scaleX = value;
                     this._sgNode.scaleX = value;
 
-                    this.emit(SCALE_CHANGED);
+                    var cache = this._hasListenerCache;
+                    if (cache && cache[SCALE_CHANGED]) {
+                        this.emit(SCALE_CHANGED);
+                    }
                 }
             },
         },
@@ -575,7 +581,10 @@ var Node = cc.Class({
                     this._scaleY = value;
                     this._sgNode.scaleY = value;
 
-                    this.emit(SCALE_CHANGED);
+                    var cache = this._hasListenerCache;
+                    if (cache && cache[SCALE_CHANGED]) {
+                        this.emit(SCALE_CHANGED);
+                    }
                 }
             },
         },
@@ -1011,8 +1020,7 @@ var Node = cc.Class({
                 this._parent = null;
             }
         }
-        else if (CC_TEST ? (/* make CC_JSB mockable*/ Function('return CC_JSB'))() : CC_JSB) {
-            this._sgNode.release();
+        else if (CC_JSB) {
             this._sgNode._entity = null;
             this._sgNode = null;
         }
@@ -1090,7 +1098,7 @@ var Node = cc.Class({
      * It's the recommended way to register touch/mouse event for Node,
      * please do not use cc.eventManager directly for Node.
      * !#zh
-     * 在节点上注册指定类型的回调函数，也可以设置 target 用于绑定响应函数的调用者。<br/>
+     * 在节点上注册指定类型的回调函数，也可以设置 target 用于绑定响应函数的 this 对象。<br/>
      * 同时您可以将事件派发到父节点或者通过调用 stopPropagation 拦截它。<br/>
      * 推荐使用这种方式来监听节点上的触摸或鼠标事件，请不要在节点上直接使用 cc.eventManager。
      * @method on
@@ -1099,7 +1107,7 @@ var Node = cc.Class({
      * @param {Function} callback - The callback that will be invoked when the event is dispatched.
      *                              The callback is ignored if it is a duplicate (the callbacks are unique).
      * @param {Event} callback.event event
-     * @param {Object} [target] - The target to invoke the callback, can be null
+     * @param {Object} [target] - The target (this object) to invoke the callback, can be null
      * @param {Boolean} [useCapture=false] - When set to true, the capture argument prevents callback
      *                              from being invoked when the event's eventPhase attribute value is BUBBLING_PHASE.
      *                              When false, callback will NOT be invoked when event's eventPhase attribute value is CAPTURING_PHASE.
@@ -1174,7 +1182,7 @@ var Node = cc.Class({
      * @method off
      * @param {String} type - A string representing the event type being removed.
      * @param {Function} callback - The callback to remove.
-     * @param {Object} [target] - The target to invoke the callback, if it's not given, only callback without target will be removed
+     * @param {Object} [target] - The target (this object) to invoke the callback, if it's not given, only callback without target will be removed
      * @param {Boolean} [useCapture=false] - Specifies whether the callback being removed was registered as a capturing callback or not.
      *                              If not specified, useCapture defaults to false. If a callback was registered twice,
      *                              one with capture and one without, each must be removed separately. Removal of a capturing callback
@@ -1585,11 +1593,8 @@ var Node = cc.Class({
         this._sgNode.setPosition(x, y);
 
         // fast check event
-        var capListeners = this._capturingListeners &&
-            this._capturingListeners._callbackTable[POSITION_CHANGED];
-        var bubListeners = this._bubblingListeners &&
-            this._bubblingListeners._callbackTable[POSITION_CHANGED];
-        if ((capListeners && capListeners.length > 0) || (bubListeners && bubListeners.length > 0)) {
+        var cache = this._hasListenerCache;
+        if (cache && cache[POSITION_CHANGED]) {
             // send event
             if (CC_EDITOR) {
                 this.emit(POSITION_CHANGED, oldPosition);
@@ -1639,7 +1644,10 @@ var Node = cc.Class({
             this._scaleY = scaleY;
             this._sgNode.setScale(scaleX, scaleY);
 
-            this.emit(SCALE_CHANGED);
+            var cache = this._hasListenerCache;
+            if (cache && cache[SCALE_CHANGED]) {
+                this.emit(SCALE_CHANGED);
+            }
         }
     },
 

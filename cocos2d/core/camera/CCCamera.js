@@ -23,10 +23,10 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-var transformDirtyFlag;
+var cullingDirtyFlag;
 
 if (!CC_JSB) {
-    transformDirtyFlag = _ccsg.Node._dirtyFlags.transformDirty;
+    cullingDirtyFlag = _ccsg.Node._dirtyFlags.cullingDirty;
     require('./CCSGCameraNode');
 }
 
@@ -109,7 +109,11 @@ let Camera = cc.Class({
         }
     },
 
-    _initSgNode: function () {},
+    _initSgNode: function () {
+        // sgNode is the sizeProvider of the node so we should sync its size with the node,
+        // otherwise the node size will become zero.
+        this._sgNode.setContentSize(this.node.getContentSize(true));
+    },
 
     _addSgTargetInSg: function (target) {
         var sgNode;
@@ -131,7 +135,7 @@ let Camera = cc.Class({
 
         if (!CC_JSB) {
             var cmd = sgNode._renderCmd;
-            cmd.setDirtyFlag(transformDirtyFlag);
+            cmd.setDirtyFlag(cullingDirtyFlag);
             cmd._cameraFlag = Camera.flags.InCamera;
 
             cc.renderer.childrenOrderDirty = true;
@@ -156,7 +160,7 @@ let Camera = cc.Class({
         
         if (!CC_JSB) {
             var cmd = sgNode._renderCmd;
-            cmd.setDirtyFlag(transformDirtyFlag);
+            cmd.setDirtyFlag(cullingDirtyFlag);
             cmd._cameraFlag = 0;
 
             cc.renderer.childrenOrderDirty = true;
@@ -170,6 +174,9 @@ let Camera = cc.Class({
         }
 
         Camera.main = this;
+        if (CC_JSB) {
+            this._sgNode.setEnable(true);
+        }
 
         let targets = this._targets;
         for (let i = 0, l = targets.length; i < l; i++) {
@@ -183,6 +190,9 @@ let Camera = cc.Class({
         }
         
         Camera.main = null;
+        if (CC_JSB) {
+            this._sgNode.setEnable(false);
+        }
 
         // target sgNode may changed, so directly remove sgTargets here.
         let sgTargets = this._sgTarges;
@@ -295,14 +305,14 @@ let Camera = cc.Class({
         return false;
     },
 
-    _setSgNodesTransformDirty: function () {
+    _setSgNodesCullingDirty: function () {
         let sgTarges = this._sgTarges;
         for (let i = 0; i < sgTarges.length; i++) {
             if (CC_JSB) {
-                sgTarges[i].markTransformUpdated();    
+                sgTarges[i].markCullingDirty();
             }
             else {
-                sgTarges[i]._renderCmd.setDirtyFlag(transformDirtyFlag);
+                sgTarges[i]._renderCmd.setDirtyFlag(cullingDirtyFlag);
             }
         }
     },
@@ -403,7 +413,7 @@ let Camera = cc.Class({
             lvm.tx !== m.tx ||
             lvm.ty !== m.ty
             ) {
-            this._setSgNodesTransformDirty();
+            this._setSgNodesCullingDirty();
             
             lvm.a = m.a;
             lvm.b = m.b;

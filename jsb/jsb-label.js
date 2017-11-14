@@ -112,6 +112,9 @@ jsbLabel.prototype.setLineHeight = function (height) {
     if (this._labelType !== _ccsg.Label.Type.SystemFont) {
         this._setLineHeight(height);
     }
+    else {
+        cc.warnID(4013);
+    }
 };
 
 jsbLabel.prototype._setColor = jsbLabel.prototype.setColor;
@@ -264,7 +267,7 @@ cc.Label = function (string, fontHandle, spriteFrame, fontSize) {
             customGlyphs: "",
             distanceFieldEnable: false
         };
-        label = jsbLabel.createWithTTF(ttfConfig, string, this._fontSize);
+        label = jsbLabel.createWithTTF(ttfConfig, string);
         label._ttfConfig = ttfConfig;
     }
     else if (spriteFrame) {

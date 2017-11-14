@@ -1,3 +1,4 @@
+var tempMat = new cc.math.Matrix4();
 
 let CameraNode = _ccsg.Node.extend({
     ctor: function () {
@@ -45,15 +46,17 @@ let CameraNode = _ccsg.Node.extend({
     _onBeforeVisit: function () {
         cc.renderer._breakBatch();
 
-        cc.math.glMatrixMode(cc.math.KM_GL_PROJECTION)
-        cc.current_stack.push();
-        cc.current_stack.top.multiply(this._mat);
+        cc.math.glMatrixMode(cc.math.KM_GL_PROJECTION);
+        
+        tempMat.assignFrom(cc.current_stack.top);
+        tempMat.multiply(this._mat);
+        cc.current_stack.push(tempMat);
     },
 
     _onAfterVisit: function () {
         cc.renderer._breakBatch();
         
-        cc.math.glMatrixMode(cc.math.KM_GL_PROJECTION)
+        cc.math.glMatrixMode(cc.math.KM_GL_PROJECTION);
         cc.current_stack.pop();
     },
 

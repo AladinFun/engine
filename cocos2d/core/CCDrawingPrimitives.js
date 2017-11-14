@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2013-2016 Chukong Technologies Inc.
+ Copyright (c) 2013-2017 Chukong Technologies Inc.
 
  http://www.cocos.com
 
@@ -23,16 +23,19 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-cc.WebView = ccui.WebView;
+var game = require('./CCGame');
 
-//FIXME: should delete this line after implementing the VideoPlayer on Mac and Windows
-if (cc.sys.os === cc.sys.OS_OSX || cc.sys.os === cc.sys.OS_WINDOWS) {
-    cc.WebView = {};
-}
+/**
+ * @property {DrawingPrimitive} _drawingUtil - drawing primitive of game engine
+ * @private
+ */
+cc._drawingUtil = null;
 
-cc.WebView.EventType = {
-    LOADING: 0,
-    LOADED: 1,
-    ERROR: 2,
-    JS_EVALUATED: 3
-};
+game.once(game.EVENT_RENDERER_INITED, function () {
+    if (cc._renderType === game.RENDER_TYPE_WEBGL) {
+        cc._drawingUtil = new (require('./CCDrawingPrimitivesWebGL'))(cc._renderContext);
+    }
+    else {
+        cc._drawingUtil = new (require('./CCDrawingPrimitivesCanvas'))(cc._renderContext);
+    }
+});

@@ -54,60 +54,6 @@ cc.js.mixin(cc.path, {
     }
 });
 
-// cc.Scheduler
-var _callbackId = 0;
-cc.Scheduler.prototype.schedule = function (callback, target, interval, repeat, delay, paused) {
-    if (delay === undefined || paused === undefined) {
-        paused = !!repeat;
-        repeat = cc.macro.REPEAT_FOREVER;
-    }
-    else {
-        paused = !!paused;
-        repeat = isFinite(repeat) ? repeat : cc.macro.REPEAT_FOREVER;
-    }
-    delay = delay || 0;
-    var instanceId = target.__instanceId || target.uuid;
-    cc.assertID(instanceId !== undefined, 1510);
-    if (!callback.__callbackId) {
-        callback.__callbackId = _callbackId++;
-    }
-    var key = instanceId + '_' + callback.__callbackId;
-    this._schedule(target, callback, interval, repeat, delay, paused, key);
-};
-cc.Scheduler.prototype.scheduleUpdate = cc.Scheduler.prototype.scheduleUpdateForTarget;
-cc.Scheduler.prototype._unschedule = cc.Scheduler.prototype.unschedule;
-cc.Scheduler.prototype.unschedule = function (callback, target) {
-    if (typeof target === 'function') {
-        var tmp = target;
-        target = callback;
-        callback = tmp;
-    }
-    if (callback.__callbackId === undefined) {
-        return;
-    }
-
-    var instanceId = target.__instanceId || target.uuid;
-    cc.assertID(instanceId !== undefined, 1510);
-    var key = instanceId + '_' + callback.__callbackId;
-    this._unschedule(key, target);
-};
-cc.Scheduler.prototype._isScheduled = cc.Scheduler.prototype.isScheduled;
-cc.Scheduler.prototype.isScheduled = function (callback, target) {
-    if (typeof target === 'function') {
-        var tmp = target;
-        target = callback;
-        callback = tmp;
-    }
-    if (callback.__callbackId === undefined) {
-        return;
-    }
-
-    var instanceId = target.__instanceId || target.uuid;
-    cc.assertID(instanceId !== undefined, 1510);
-    var key = instanceId + '_' + callback.__callbackId;
-    this._isScheduled(key, target);
-};
-
 // Node
 var nodeProto = cc.Node.prototype;
 cc.defineGetterSetter(nodeProto, "_parent", nodeProto.getParent, nodeProto.setParent);
@@ -142,14 +88,13 @@ WindowTimeFun.prototype.fun = function () {
  @param {number} delay
  @return {number}
  */
-window.setTimeout = function (code, delay, ...args) {
+window.setTimeout = function (code, delay) {
     var target = new WindowTimeFun(code);
-    if (args.length > 0) {
-        target._args = args;
-    }
+    if (arguments.length > 2)
+        target._args = Array.prototype.slice.call(arguments, 2);
     var original = target.fun;
     target.fun = function () {
-        original.call(this);
+        original.apply(this, arguments);
         clearTimeout(target._intervalId);
     };
     cc.director.getScheduler().schedule(target.fun, target, delay / 1000, 0, 0, false);
@@ -163,11 +108,11 @@ window.setTimeout = function (code, delay, ...args) {
  @param {number} delay
  @return {number}
  */
-window.setInterval = function (code, delay, ...args) {
+window.setInterval = function (code, delay) {
     var target = new WindowTimeFun(code);
-    if (args.length > 0) {
-        target._args = args;
-    }
+    if (arguments.length > 2)
+        target._args = Array.prototype.slice.call(arguments, 2);
+
     cc.director.getScheduler().schedule(target.fun, target, delay / 1000, cc.macro.REPEAT_FOREVER, 0, false);
     _windowTimeFunHash[target._intervalId] = target;
     return target._intervalId;

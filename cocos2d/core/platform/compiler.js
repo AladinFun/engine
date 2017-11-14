@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2013-2016 Chukong Technologies Inc.
+ Copyright (c) 2013-2017 Chukong Technologies Inc.
 
  http://www.cocos.com
 
@@ -23,16 +23,28 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-cc.WebView = ccui.WebView;
-
-//FIXME: should delete this line after implementing the VideoPlayer on Mac and Windows
-if (cc.sys.os === cc.sys.OS_OSX || cc.sys.os === cc.sys.OS_WINDOWS) {
-    cc.WebView = {};
+function deepFlatten (strList, array) {
+    for (var i = 0; i < array.length; i++) {
+        var item = array[i];
+        if (Array.isArray(item)) {
+            deepFlatten(strList, item);
+        }
+        // else if (item instanceof Declaration) {
+        //     strList.push(item.toString());
+        // }
+        else {
+            strList.push(item);
+        }
+    }
 }
 
-cc.WebView.EventType = {
-    LOADING: 0,
-    LOADED: 1,
-    ERROR: 2,
-    JS_EVALUATED: 3
+function flattenCodeArray (array) {
+    var separator = CC_DEV ? '\n' : '';
+    var strList = [];
+    deepFlatten(strList, array);
+    return strList.join(separator);
+}
+
+module.exports = {
+    flattenCodeArray
 };
