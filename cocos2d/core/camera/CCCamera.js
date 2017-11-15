@@ -109,7 +109,11 @@ let Camera = cc.Class({
         }
     },
 
-    _initSgNode: function () {},
+    _initSgNode: function () {
+        // sgNode is the sizeProvider of the node so we should sync its size with the node,
+        // otherwise the node size will become zero.
+        this._sgNode.setContentSize(this.node.getContentSize(true));
+    },
 
     _addSgTargetInSg: function (target) {
         var sgNode;
@@ -130,7 +134,7 @@ let Camera = cc.Class({
         this._sgTarges.push(sgNode);
 
         if (!CC_JSB) {
-            var cmd = sgNode._renderCmd;
+            var cmd = sgNode._renderCmd; 
             cmd.setDirtyFlag(transformDirtyFlag);
             cmd._cameraFlag = Camera.flags.InCamera;
 
@@ -170,6 +174,9 @@ let Camera = cc.Class({
         }
 
         Camera.main = this;
+        if (CC_JSB) {
+            this._sgNode.setEnable(true);
+        }
 
         let targets = this._targets;
         for (let i = 0, l = targets.length; i < l; i++) {
@@ -183,6 +190,9 @@ let Camera = cc.Class({
         }
         
         Camera.main = null;
+        if (CC_JSB) {
+            this._sgNode.setEnable(false);
+        }
 
         // target sgNode may changed, so directly remove sgTargets here.
         let sgTargets = this._sgTarges;
