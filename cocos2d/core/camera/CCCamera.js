@@ -34,7 +34,7 @@ if (!CC_JSB) {
  * !#en
  * Camera is usefull when making reel game or other games which need scroll screen.
  * Using camera will be more efficient than moving node to scroll screen.
- * Camera 
+ * Camera
  * !#zh
  * 摄像机在制作卷轴或是其他需要移动屏幕的游戏时比较有用，使用摄像机将会比移动节点来移动屏幕更加高效。
  * @class Camera
@@ -43,7 +43,7 @@ if (!CC_JSB) {
 let Camera = cc.Class({
     name: 'cc.Camera',
     extends: cc._RendererUnderSG,
-    
+
     ctor: function () {
         this.viewMatrix = cc.affineTransformMake();
         this.invertViewMatrix = cc.affineTransformMake();
@@ -155,9 +155,9 @@ let Camera = cc.Class({
 
         this._sgNode.removeTarget(sgNode);
         delete sgNode._cameraInfo;
-        
+
         cc.js.array.remove(this._sgTarges, sgNode);
-        
+
         if (!CC_JSB) {
             var cmd = sgNode._renderCmd;
             cmd.setDirtyFlag(cullingDirtyFlag);
@@ -188,7 +188,7 @@ let Camera = cc.Class({
         if (Camera.main !== this) {
             return;
         }
-        
+
         Camera.main = null;
         if (CC_JSB) {
             this._sgNode.setEnable(false);
@@ -207,7 +207,7 @@ let Camera = cc.Class({
      * !#zh
      * 将指定的节点添加到摄像机中。
      * @method addTarget
-     * @param {Node} target 
+     * @param {Node} target
      */
     addTarget: function (target) {
         if (this._targets.indexOf(target) !== -1) {
@@ -224,7 +224,7 @@ let Camera = cc.Class({
      * !#zh
      * 将指定的节点从摄像机中移除。
      * @method removeTarget
-     * @param {Node} target 
+     * @param {Node} target
      */
     removeTarget: function (target) {
         if (this._targets.indexOf(target) === -1) {
@@ -293,7 +293,7 @@ let Camera = cc.Class({
         if (node instanceof cc.Node) {
             node = node._sgNode;
         }
-        
+
         let targets = this._sgTarges;
         while (node) {
             if (targets.indexOf(node) !== -1) {
@@ -356,7 +356,7 @@ let Camera = cc.Class({
         let visibleRect = cc.visibleRect;
         let selfVisibleRect = this.visibleRect;
         let node = this.node;
-        
+
         let wt = node.getNodeToWorldTransformAR();
 
         let rotation = -(Math.atan2(wt.b, wt.a) + Math.atan2(-wt.c, wt.d)) * 0.5;
@@ -414,7 +414,7 @@ let Camera = cc.Class({
             lvm.ty !== m.ty
             ) {
             this._setSgNodesCullingDirty();
-            
+
             lvm.a = m.a;
             lvm.b = m.b;
             lvm.c = m.c;
