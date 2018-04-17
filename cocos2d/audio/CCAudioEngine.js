@@ -41,6 +41,7 @@ var getAudioFromPath = function (path) {
         var oldId = list.shift();
         var oldAudio = id2audio[oldId];
         oldAudio.stop();
+        oldAudio.destroy();
     }
 
     audio = new Audio(path);
@@ -365,6 +366,8 @@ var audioEngine = {
             return false;
         audio.off('load', audio.__callback);
         audio.stop();
+        audio.destroy();
+
         return true;
     },
 
@@ -380,6 +383,7 @@ var audioEngine = {
             var audio = id2audio[id];
             if (audio && audio.stop) {
                 audio.stop();
+                audio.destroy();
                 audio.off('load', audio.__callback);
             }
         }
@@ -425,6 +429,7 @@ var audioEngine = {
             var audio = id2audio[id];
             if (audio) {
                 audio.stop();
+                audio.destroy();
                 delete id2audio[id];
             }
         }
@@ -439,6 +444,12 @@ var audioEngine = {
      */
     uncacheAll: function () {
         this.stopAll();
+        for (var id in id2audio) {
+            var audio = id2audio[id];
+            if (audio) {
+                audio.destroy();
+            }
+        }
         id2audio = {};
         url2id = {};
     },

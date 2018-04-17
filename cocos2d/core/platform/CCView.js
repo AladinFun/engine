@@ -25,13 +25,9 @@
  ****************************************************************************/
 var eventManager = require('../event-manager');
 
-function isWeChatGame () {
-    return window['wx'];
-}
-
 var __BrowserGetter = {
     init: function(){
-        if (cc.sys.platform !== cc.sys.WECHAT_GAME) {
+        if (!CC_WECHATGAME && !CC_QQPLAY) {
             this.html = document.getElementsByTagName("html")[0];
         }
     },
@@ -53,14 +49,20 @@ var __BrowserGetter = {
     adaptationType: cc.sys.browserType
 };
 
-if (window.navigator.userAgent.indexOf("OS 8_1_") > -1) //this mistake like MIUI, so use of MIUI treatment method
-    __BrowserGetter.adaptationType = cc.sys.BROWSER_TYPE_MIUI;
-
 if (cc.sys.os === cc.sys.OS_IOS) // All browsers are WebView
     __BrowserGetter.adaptationType = cc.sys.BROWSER_TYPE_SAFARI;
 
-if (isWeChatGame()) {
-    __BrowserGetter.adaptationType = cc.sys.BROWSER_TYPE_WECHAT_GAME;
+if (CC_WECHATGAME) {
+    if (cc.sys.browserType === cc.sys.BROWSER_TYPE_WECHAT_GAME_SUB) {
+        __BrowserGetter.adaptationType = cc.sys.BROWSER_TYPE_WECHAT_GAME_SUB;
+    }
+    else {
+        __BrowserGetter.adaptationType = cc.sys.BROWSER_TYPE_WECHAT_GAME;
+    }
+}
+
+if (CC_QQPLAY) {
+    __BrowserGetter.adaptationType = cc.sys.BROWSER_TYPE_QQ_PLAY;
 }
 
 switch (__BrowserGetter.adaptationType) {
@@ -107,6 +109,15 @@ switch (__BrowserGetter.adaptationType) {
         };
         __BrowserGetter.availHeight = function(){
             return window.innerHeight;
+        };
+        break;
+    case cc.sys.BROWSER_TYPE_WECHAT_GAME_SUB:
+        var sharedCanvas = wx.getSharedCanvas();
+        __BrowserGetter.availWidth = function(){
+            return sharedCanvas.width;
+        };
+        __BrowserGetter.availHeight = function(){
+            return sharedCanvas.height;
         };
         break;
 }
@@ -396,7 +407,7 @@ var View = cc._Class.extend({
     },
 
     _adjustViewportMeta: function () {
-        if (this._isAdjustViewPort && cc.sys.platform !== cc.sys.WECHAT_GAME) {
+        if (this._isAdjustViewPort && !CC_WECHATGAME && !CC_QQPLAY) {
             this._setViewportMeta(__BrowserGetter.meta, false);
             this._isAdjustViewPort = false;
         }
@@ -829,7 +840,7 @@ var View = cc._Class.extend({
      * @param {ResolutionPolicy|Number} resolutionPolicy The resolution policy desired
      */
     setRealPixelResolution: function (width, height, resolutionPolicy) {
-        if (cc.sys.platform !== cc.sys.WECHAT_GAME) {
+        if (!CC_WECHATGAME && !CC_QQPLAY) {
             // Set viewport's width
             this._setViewportMeta({"width": width}, true);
 
@@ -1081,6 +1092,17 @@ cc.ContainerStrategy = cc._Class.extend(/** @lends cc.ContainerStrategy# */{
         // Setup canvas
         locCanvas.width = w * devicePixelRatio;
         locCanvas.height = h * devicePixelRatio;
+
+        // set sharedCanvas size
+        if (cc.sys.browserType === cc.sys.BROWSER_TYPE_WECHAT_GAME) {
+            var openDataContext = wx.getOpenDataContext();
+            var sharedCanvas = openDataContext.canvas;
+            if (sharedCanvas) {
+                sharedCanvas.width = locCanvas.width;
+                sharedCanvas.height = locCanvas.height;
+            }
+        }
+
         cc._renderContext.resetCache && cc._renderContext.resetCache();
     },
 

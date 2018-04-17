@@ -106,6 +106,12 @@
 /**
  * @property {Boolean} CC_TEST - Running in the engine's unit test.
  */
+/**
+ * @property {Boolean} CC_WECHATGAME - Running in the Wechat's mini game.
+ */
+/**
+ * @property {Boolean} CC_QQPLAY - Running in the bricks.
+ */
 
 // window may be undefined when first load engine from editor
 var _global = typeof window === 'undefined' ? global : window;
@@ -113,12 +119,12 @@ function defineMacro (name, defaultValue) {
     // if "global_defs" not preprocessed by uglify, just declare them globally,
     // this may happened in release version's preview page.
     // (use evaled code to prevent mangle by uglify)
-    if (typeof _global[name] == 'undefined') {
+    if (typeof _global[name] === 'undefined') {
         _global[name] = defaultValue;
     }
 }
 function defined (name) {
-    return typeof _global[name] == 'object';
+    return typeof _global[name] === 'object';
 }
 
 defineMacro('CC_TEST', defined('tap') || defined('QUnit'));
@@ -128,6 +134,9 @@ defineMacro('CC_DEV', true);    // (CC_EDITOR && !CC_BUILD) || CC_PREVIEW || CC_
 defineMacro('CC_DEBUG', true);  // CC_DEV || Debug Build
 defineMacro('CC_JSB', defined('jsb'));
 defineMacro('CC_BUILD', false);
+defineMacro('CC_WECHATGAME', false);
+defineMacro('CC_QQPLAY', false);
+defineMacro('CC_SUPPORT_JIT', !(CC_WECHATGAME || CC_QQPLAY));
 
 // PREDEFINE
 
@@ -140,9 +149,6 @@ defineMacro('CC_BUILD', false);
  * @main cc
  */
 cc = {};
-
-// check whether support jit
-cc.supportJit = !defined('wx') && typeof Function('') === 'function';
 
 // The namespace for original nodes rendering in scene graph.
 _ccsg = {};

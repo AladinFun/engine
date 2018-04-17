@@ -30,7 +30,7 @@ if (!(CC_EDITOR && Editor.isMainProcess)) {
 }
 
 require('../audio/CCAudioEngine');
-var inputManager = require('./platform/CCInputManager');
+var inputManager = CC_QQPLAY ? require('./platform/BKInputManager') : require('./platform/CCInputManager');
 
 /**
  * !#en An object to boot the game.
@@ -656,11 +656,23 @@ var game = {
         var el = this.config[game.CONFIG_KEY.id],
             win = window,
             localCanvas, localContainer,
-            isWeChatGame = cc.sys.platform === cc.sys.WECHAT_GAME;
+            isWeChatGame = cc.sys.platform === cc.sys.WECHAT_GAME,
+            isQQPlay = cc.sys.platform === cc.sys.QQ_PLAY;
 
         if (isWeChatGame) {
             this.container = cc.container = localContainer = document.createElement("DIV");
             this.frame = localContainer.parentNode === document.body ? document.documentElement : localContainer.parentNode;
+            if (cc.sys.browserType === cc.sys.BROWSER_TYPE_WECHAT_GAME_SUB) {
+                localCanvas = wx.getSharedCanvas();
+            }
+            else {
+                localCanvas = canvas;
+            }
+            this.canvas = cc._canvas = localCanvas;
+        }
+        else if (isQQPlay) {
+            this.container = cc.container = document.createElement("DIV");
+            this.frame = document.documentElement;
             this.canvas = cc._canvas = localCanvas = canvas;
         }
         else {
@@ -708,6 +720,8 @@ var game = {
         if (cc._renderType === game.RENDER_TYPE_WEBGL) {
             var opts = {
                 'stencil': true,
+                // MSAA is causing serious performance dropdown on some browsers.
+                'antialias': cc.macro.ENABLE_WEBGL_ANTIALIAS,
                 'alpha': cc.macro.ENABLE_TRANSPARENT_CANVAS
             };
             if (isWeChatGame) {
@@ -785,7 +799,12 @@ var game = {
         }
 
         if (navigator.userAgent.indexOf("MicroMessenger") > -1) {
-            win.onfocus = function(){ onShow() };
+            win.onfocus = onShow;
+        }
+
+        if (CC_WECHATGAME && cc.sys.browserType !== cc.sys.BROWSER_TYPE_WECHAT_GAME_SUB) {
+            wx.onShow(onShow);
+            wx.onHide(onHidden);
         }
 
         if ("onpageshow" in window && "onpagehide" in window) {

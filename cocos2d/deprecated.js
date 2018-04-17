@@ -227,7 +227,7 @@ if (CC_DEV) {
     });
 
     function deprecateEnum (obj, oldPath, newPath, hasTypePrefixBefore) {
-        if (!cc.supportJit) {
+        if (!CC_SUPPORT_JIT) {
             return;
         }
         hasTypePrefixBefore = hasTypePrefixBefore !== false;
@@ -681,5 +681,9 @@ if (CC_DEV) {
             }
         },
     });
+
+    if (typeof dragonBones !== 'undefined') {
+        js.obsolete(dragonBones.CCFactory, 'dragonBones.CCFactory.getFactory', 'getInstance');
+    }
 
 }
