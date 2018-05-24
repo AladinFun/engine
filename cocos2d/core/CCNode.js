@@ -2505,9 +2505,27 @@ var Node = cc.Class({
     _removeSgNode: SgHelper.removeSgNode,
 
     onRestore: CC_EDITOR && function () {
+        // update dummy sgNode of components
+        for (var i=0; i<this._components.length; i++) {
+            var comp = this._components[i];
+            if (!comp || !comp._sgNode) {
+                continue;
+            }
+            comp._sgNode.visible = comp.enabledInHierarchy;
+        }
+
         this._updateDummySgNode();
 
         var sizeProvider = this._sizeProvider;
+        if (sizeProvider) {
+            // sync status for records used in Timeline editor
+            var sgComponent = this.getComponent(cc._SGComponent);
+            if (sgComponent && sgComponent._sgNode === sizeProvider && !(sgComponent._objFlags & Flags.IsPreloadStarted)) {
+                sgComponent._removeSgNode();
+                this._sizeProvider = sizeProvider = null;
+            }
+        }
+
         if (sizeProvider) {
             sizeProvider.setContentSize(this._contentSize);
             if (sizeProvider instanceof _ccsg.Node) {
